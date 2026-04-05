@@ -25,7 +25,7 @@
 
 /* Begin PBXFileReference section */
 		05A4E230E6A19779207F2579 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
-		0F63FE14BD05B9BFA48B454D /* NectarViewMobile.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = NectarViewMobile.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0F63FE14BD05B9BFA48B454D /* NectarViewMobile.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NectarViewMobile.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		408F987A1C836195BD1912A7 /* DocumentPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentPickerView.swift; sourceTree = "<group>"; };
 		555F945608580C1DF0229081 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		7468F2353B1FF31A3E2749B6 /* ImageDisplayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageDisplayView.swift; sourceTree = "<group>"; };
@@ -33,7 +33,7 @@
 		87417A8FCF56A12799587157 /* ViewerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewerView.swift; sourceTree = "<group>"; };
 		964E6C4071A15049750310EE /* HelpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpView.swift; sourceTree = "<group>"; };
 		A491CD3E6B69547A475CA329 /* BookmarkListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkListView.swift; sourceTree = "<group>"; };
-		AAE82FDFEE0B8CED0DBB62B5 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		AAE82FDFEE0B8CED0DBB62B5 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		BA5EB8CC49CE7A8C0A1C43E4 /* NectarViewMobileApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NectarViewMobileApp.swift; sourceTree = "<group>"; };
 		D6716D1484F21A1CCF77AB8D /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		DB8879170EBD3DF493814A9A /* NectarCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = NectarCore; path = ../NectarCore; sourceTree = SOURCE_ROOT; };
@@ -209,8 +209,6 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1600;
-				TargetAttributes = {
-				};
 			};
 			buildConfigurationList = 6589007B35FB4C4FFE91695F /* Build configuration list for PBXProject "NectarViewMobile" */;
 			developmentRegion = en;
@@ -393,6 +391,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5GT4TPNV75;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = NectarView;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -419,6 +418,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5GT4TPNV75;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = NectarView;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

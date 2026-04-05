@@ -22,10 +22,6 @@ struct ViewerView: View {
     @State private var autoScrollTimer: Timer?
     @State private var showAutoScrollSettings = false
 
-    // Slider preview
-    @State private var isSliderDragging = false
-    @State private var sliderPreviewIndex: Int = 0
-
     // Help & Tip Jar
     @State private var isHelpPresented = false
     @State private var isTipJarPresented = false
@@ -39,11 +35,6 @@ struct ViewerView: View {
                     dropZoneView
                 } else {
                     imageContentWithTapZones(geometry: geometry)
-                }
-
-                // Slider thumbnail preview
-                if isSliderDragging && !imageLoader.images.isEmpty {
-                    sliderPreview(geometry: geometry)
                 }
 
                 if isToolbarVisible && !imageLoader.images.isEmpty {
@@ -197,34 +188,6 @@ struct ViewerView: View {
                 .allowsHitTesting(!isToolbarVisible)
             }
         }
-    }
-
-    // MARK: - Slider Preview
-
-    private func sliderPreview(geometry: GeometryProxy) -> some View {
-        VStack {
-            if sliderPreviewIndex >= 0 && sliderPreviewIndex < imageLoader.images.count,
-               let previewImage = imageLoader.getImage(for: imageLoader.images[sliderPreviewIndex]) {
-                VStack(spacing: 4) {
-                    Image(platformImage: previewImage)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: geometry.size.width * 0.4, height: geometry.size.height * 0.3)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                        .shadow(radius: 5)
-
-                    Text("\(sliderPreviewIndex + 1) / \(imageLoader.images.count)")
-                        .font(.caption)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 2)
-                        .background(.ultraThinMaterial)
-                        .clipShape(Capsule())
-                }
-            }
-            Spacer()
-        }
-        .padding(.top, geometry.size.height * 0.3)
-        .transition(.opacity)
     }
 
     // MARK: - Context Menu
@@ -506,24 +469,14 @@ struct ViewerView: View {
     private var bottomBar: some View {
         VStack(spacing: 8) {
             if !imageLoader.images.isEmpty {
-                // Slider with drag preview
                 Slider(
                     value: Binding(
                         get: { Double(imageLoader.currentIndex) },
-                        set: { newValue in
-                            let index = Int(newValue)
-                            sliderPreviewIndex = index
-                            imageLoader.updateSafeCurrentIndex(index)
-                        }
+                        set: { imageLoader.updateSafeCurrentIndex(Int($0)) }
                     ),
                     in: 0...max(Double(imageLoader.images.count - 1), 1),
                     step: 1
-                ) { editing in
-                    isSliderDragging = editing
-                    if editing {
-                        sliderPreviewIndex = imageLoader.currentIndex
-                    }
-                }
+                )
                 .padding(.horizontal)
 
                 // Image info (navigation title equivalent)
