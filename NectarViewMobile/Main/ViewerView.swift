@@ -36,6 +36,9 @@ struct ViewerView: View {
         }
         .statusBarHidden(!isToolbarVisible)
         .animation(.easeInOut(duration: 0.2), value: isToolbarVisible)
+        .onDisappear {
+            stopAutoScroll()
+        }
     }
 
     // MARK: - Drop Zone (initial state)

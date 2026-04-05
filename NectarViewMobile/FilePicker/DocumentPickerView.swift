@@ -45,11 +45,17 @@ struct DocumentPickerView: UIViewControllerRepresentable {
         func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
             guard let url = urls.first else { return }
             guard url.startAccessingSecurityScopedResource() else { return }
-            defer { url.stopAccessingSecurityScopedResource() }
 
-            // Copy to app's temporary directory for persistent access
+            // Copy to app's temporary directory for persistent access.
+            // Must complete copy before releasing security scope.
             let destURL = copyToTempDirectory(url)
-            onPick(destURL ?? url)
+            url.stopAccessingSecurityScopedResource()
+
+            guard let destURL = destURL else {
+                print("Failed to copy file from document picker")
+                return
+            }
+            onPick(destURL)
         }
 
         private func copyToTempDirectory(_ url: URL) -> URL? {
