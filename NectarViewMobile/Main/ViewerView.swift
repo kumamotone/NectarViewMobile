@@ -149,12 +149,10 @@ struct ViewerView: View {
                         .frame(width: geometry.size.width * 0.2)
                         .contentShape(Rectangle())
                         .onTapGesture {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                if imageLoader.viewMode == .spreadRightToLeft {
-                                    imageLoader.showNextImage()
-                                } else {
-                                    imageLoader.showPreviousImage()
-                                }
+                            if imageLoader.viewMode == .spreadRightToLeft {
+                                imageLoader.showNextImage()
+                            } else {
+                                imageLoader.showPreviousImage()
                             }
                         }
                         .overlay(
@@ -171,12 +169,10 @@ struct ViewerView: View {
                         .frame(width: geometry.size.width * 0.2)
                         .contentShape(Rectangle())
                         .onTapGesture {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                if imageLoader.viewMode == .spreadRightToLeft {
-                                    imageLoader.showPreviousImage()
-                                } else {
-                                    imageLoader.showNextImage()
-                                }
+                            if imageLoader.viewMode == .spreadRightToLeft {
+                                imageLoader.showPreviousImage()
+                            } else {
+                                imageLoader.showNextImage()
                             }
                         }
                         .overlay(
@@ -333,12 +329,10 @@ struct ViewerView: View {
                 guard abs(horizontal) > abs(value.translation.height),
                       abs(horizontal) > threshold else { return }
 
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    if horizontal < 0 {
-                        imageLoader.showNextImage()
-                    } else {
-                        imageLoader.showPreviousImage()
-                    }
+                if horizontal < 0 {
+                    imageLoader.showPreviousImage()
+                } else {
+                    imageLoader.showNextImage()
                 }
             }
     }
