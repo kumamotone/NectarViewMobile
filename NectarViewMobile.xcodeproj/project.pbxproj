@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		026F464F42B840017FCD9322 /* DocumentPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 408F987A1C836195BD1912A7 /* DocumentPickerView.swift */; };
 		03336AC1F6B8F6EA8CCEB26D /* ViewerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87417A8FCF56A12799587157 /* ViewerView.swift */; };
+		1E0E598458DF3E5E128D2E63 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = AAE82FDFEE0B8CED0DBB62B5 /* PrivacyInfo.xcprivacy */; };
 		395643AF6B576B620B83A2EA /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 555F945608580C1DF0229081 /* AppSettings.swift */; };
 		67911A7B9DB38F0C7AD1532E /* BookmarkListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A491CD3E6B69547A475CA329 /* BookmarkListView.swift */; };
 		845E08DDE9A7693CCE9E797B /* TipJarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8254F4A9FF9E7FDD09F32C57 /* TipJarView.swift */; };
@@ -29,6 +30,7 @@
 		8254F4A9FF9E7FDD09F32C57 /* TipJarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipJarView.swift; sourceTree = "<group>"; };
 		87417A8FCF56A12799587157 /* ViewerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewerView.swift; sourceTree = "<group>"; };
 		A491CD3E6B69547A475CA329 /* BookmarkListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkListView.swift; sourceTree = "<group>"; };
+		AAE82FDFEE0B8CED0DBB62B5 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		BA5EB8CC49CE7A8C0A1C43E4 /* NectarViewMobileApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NectarViewMobileApp.swift; sourceTree = "<group>"; };
 		D6716D1484F21A1CCF77AB8D /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		DB8879170EBD3DF493814A9A /* NectarCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = NectarCore; path = ../NectarCore; sourceTree = SOURCE_ROOT; };
@@ -73,6 +75,7 @@
 		3933170646986D56BB060F13 /* NectarViewMobile */ = {
 			isa = PBXGroup;
 			children = (
+				AAE82FDFEE0B8CED0DBB62B5 /* PrivacyInfo.xcprivacy */,
 				33312C6168E6F80DA4AC8E2E /* App */,
 				BF901422CF0D9E7949C5EA5B /* Bookmarks */,
 				65948A0961C9E55A617C8600 /* FilePicker */,
@@ -177,6 +180,7 @@
 			buildConfigurationList = 396639D7072322BF68A9019A /* Build configuration list for PBXNativeTarget "NectarViewMobile" */;
 			buildPhases = (
 				22D9E9D56787CB379C8074AD /* Sources */,
+				5E70420E04ED20DD087B8716 /* Resources */,
 				F2A86F5A4C260FE94F008CC1 /* Frameworks */,
 			);
 			buildRules = (
@@ -223,6 +227,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		5E70420E04ED20DD087B8716 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1E0E598458DF3E5E128D2E63 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		22D9E9D56787CB379C8074AD /* Sources */ = {

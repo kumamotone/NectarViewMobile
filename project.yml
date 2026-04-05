@@ -9,6 +9,9 @@ options:
 packages:
   NectarCore:
     path: ../NectarCore
+    # For CI/other machines, use:
+    # url: https://github.com/kumamotone/NectarCore.git
+    # from: 1.0.0
 
 targets:
   NectarViewMobile:
