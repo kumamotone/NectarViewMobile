@@ -5,6 +5,8 @@ struct SettingsView: View {
     @EnvironmentObject var appSettings: AppSettings
     @Environment(\.dismiss) private var dismiss
 
+    @State private var isTipJarPresented = false
+
     var body: some View {
         NavigationStack {
             Form {
@@ -38,6 +40,23 @@ struct SettingsView: View {
                     }
                 }
 
+                // Tip Jar
+                Section {
+                    Button {
+                        isTipJarPresented = true
+                    } label: {
+                        HStack {
+                            Label("Tip Jar", systemImage: "heart.fill")
+                                .foregroundStyle(.pink)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .tint(.primary)
+                }
+
                 // Reset
                 Section {
                     Button(role: .destructive) {
@@ -55,6 +74,9 @@ struct SettingsView: View {
                         dismiss()
                     }
                 }
+            }
+            .sheet(isPresented: $isTipJarPresented) {
+                TipJarView(isPresented: $isTipJarPresented)
             }
         }
     }

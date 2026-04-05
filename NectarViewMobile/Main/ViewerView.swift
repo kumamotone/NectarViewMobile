@@ -1,5 +1,6 @@
 import SwiftUI
 import NectarCore
+import UniformTypeIdentifiers
 
 struct ViewerView: View {
     @ObservedObject var imageLoader: ImageLoader
@@ -19,25 +20,65 @@ struct ViewerView: View {
     @State private var isAutoScrolling = false
     @State private var autoScrollInterval: Double = 3.0
     @State private var autoScrollTimer: Timer?
+    @State private var showAutoScrollSettings = false
+
+    // Slider preview
+    @State private var isSliderDragging = false
+    @State private var sliderPreviewIndex: Int = 0
+
+    // Help & Tip Jar
+    @State private var isHelpPresented = false
+    @State private var isTipJarPresented = false
 
     var body: some View {
-        ZStack {
-            appSettings.backgroundColor.ignoresSafeArea()
+        GeometryReader { geometry in
+            ZStack {
+                appSettings.backgroundColor.ignoresSafeArea()
 
-            if imageLoader.images.isEmpty && imageLoader.isInitialLoad {
-                dropZoneView
-            } else {
-                imageContent
-            }
+                if imageLoader.images.isEmpty && imageLoader.isInitialLoad {
+                    dropZoneView
+                } else {
+                    imageContentWithTapZones(geometry: geometry)
+                }
 
-            if isToolbarVisible && !imageLoader.images.isEmpty {
-                overlayControls
+                // Slider thumbnail preview
+                if isSliderDragging && !imageLoader.images.isEmpty {
+                    sliderPreview(geometry: geometry)
+                }
+
+                if isToolbarVisible && !imageLoader.images.isEmpty {
+                    overlayControls(geometry: geometry)
+                }
             }
         }
         .statusBarHidden(!isToolbarVisible)
         .animation(.easeInOut(duration: 0.2), value: isToolbarVisible)
         .onDisappear {
             stopAutoScroll()
+        }
+        // Context menu (long press)
+        .contextMenu {
+            contextMenuContent
+        }
+        // Drag & drop
+        .onDrop(of: [.fileURL], isTargeted: nil) { providers in
+            if let provider = providers.first {
+                _ = provider.loadObject(ofClass: URL.self) { url, _ in
+                    if let url = url {
+                        DispatchQueue.main.async {
+                            imageLoader.loadImages(from: url)
+                        }
+                    }
+                }
+                return true
+            }
+            return false
+        }
+        .sheet(isPresented: $isHelpPresented) {
+            HelpView()
+        }
+        .sheet(isPresented: $isTipJarPresented) {
+            TipJarView(isPresented: $isTipJarPresented)
         }
     }
 
@@ -64,35 +105,227 @@ struct ViewerView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             }
         }
-    }
-
-    // MARK: - Image Content
-
-    private var imageContent: some View {
-        ImageDisplayView(imageLoader: imageLoader, appSettings: appSettings)
-            .scaleEffect(scale)
-            .offset(offset)
-            .rotationEffect(appSettings.isSpreadViewEnabled ? .zero : imageLoader.currentRotation)
-            .gesture(magnificationGesture)
-            .simultaneousGesture(dragGesture)
-            .onTapGesture(count: 2) {
-                withAnimation(.spring()) {
-                    if scale > 1.1 {
-                        scale = 1.0
-                        offset = .zero
-                        lastScale = 1.0
-                        lastOffset = .zero
-                    } else {
-                        scale = 2.5
-                        lastScale = 2.5
+        .onDrop(of: [.fileURL], isTargeted: nil) { providers in
+            if let provider = providers.first {
+                _ = provider.loadObject(ofClass: URL.self) { url, _ in
+                    if let url = url {
+                        DispatchQueue.main.async {
+                            imageLoader.loadImages(from: url)
+                        }
                     }
                 }
+                return true
             }
-            .onTapGesture(count: 1) {
-                withAnimation {
-                    isToolbarVisible.toggle()
+            return false
+        }
+    }
+
+    // MARK: - Image Content with Tap Zones
+
+    private func imageContentWithTapZones(geometry: GeometryProxy) -> some View {
+        ZStack {
+            ImageDisplayView(imageLoader: imageLoader, appSettings: appSettings)
+                .scaleEffect(scale)
+                .offset(offset)
+                .rotationEffect(appSettings.isSpreadViewEnabled ? .zero : imageLoader.currentRotation)
+                .gesture(magnificationGesture)
+                .simultaneousGesture(dragGesture)
+                .onTapGesture(count: 2) {
+                    withAnimation(.spring()) {
+                        if scale > 1.1 {
+                            scale = 1.0
+                            offset = .zero
+                            lastScale = 1.0
+                            lastOffset = .zero
+                        } else {
+                            scale = 2.5
+                            lastScale = 2.5
+                        }
+                    }
+                }
+                .onTapGesture(count: 1) {
+                    withAnimation {
+                        isToolbarVisible.toggle()
+                    }
+                }
+
+            // Left/right tap zones for page navigation
+            if scale <= 1.1 {
+                HStack(spacing: 0) {
+                    // Left tap zone
+                    Rectangle()
+                        .fill(Color.clear)
+                        .frame(width: geometry.size.width * 0.2)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                if imageLoader.viewMode == .spreadRightToLeft {
+                                    imageLoader.showNextImage()
+                                } else {
+                                    imageLoader.showPreviousImage()
+                                }
+                            }
+                        }
+                        .overlay(
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 30))
+                                .foregroundStyle(.white.opacity(0.3))
+                        )
+
+                    Spacer()
+
+                    // Right tap zone
+                    Rectangle()
+                        .fill(Color.clear)
+                        .frame(width: geometry.size.width * 0.2)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                if imageLoader.viewMode == .spreadRightToLeft {
+                                    imageLoader.showPreviousImage()
+                                } else {
+                                    imageLoader.showNextImage()
+                                }
+                            }
+                        }
+                        .overlay(
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 30))
+                                .foregroundStyle(.white.opacity(0.3))
+                        )
+                }
+                .allowsHitTesting(!isToolbarVisible)
+            }
+        }
+    }
+
+    // MARK: - Slider Preview
+
+    private func sliderPreview(geometry: GeometryProxy) -> some View {
+        VStack {
+            if sliderPreviewIndex >= 0 && sliderPreviewIndex < imageLoader.images.count,
+               let previewImage = imageLoader.getImage(for: imageLoader.images[sliderPreviewIndex]) {
+                VStack(spacing: 4) {
+                    Image(platformImage: previewImage)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: geometry.size.width * 0.4, height: geometry.size.height * 0.3)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .shadow(radius: 5)
+
+                    Text("\(sliderPreviewIndex + 1) / \(imageLoader.images.count)")
+                        .font(.caption)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 2)
+                        .background(.ultraThinMaterial)
+                        .clipShape(Capsule())
                 }
             }
+            Spacer()
+        }
+        .padding(.top, geometry.size.height * 0.3)
+        .transition(.opacity)
+    }
+
+    // MARK: - Context Menu
+
+    @ViewBuilder
+    private var contextMenuContent: some View {
+        Button {
+            onOpenFile()
+        } label: {
+            Label(NSLocalizedString("Open", comment: ""), systemImage: "folder")
+        }
+
+        Divider()
+
+        Button {
+            appSettings.isSpreadViewEnabled = false
+            imageLoader.updateViewMode(appSettings: appSettings)
+        } label: {
+            Label(NSLocalizedString("Single Page View", comment: ""), systemImage: "doc.text")
+        }
+
+        Button {
+            appSettings.isSpreadViewEnabled = true
+            appSettings.isRightToLeftReading = true
+            imageLoader.updateViewMode(appSettings: appSettings)
+        } label: {
+            Label(NSLocalizedString("Spread View (Right to Left)", comment: ""), systemImage: "book.closed")
+        }
+
+        Button {
+            appSettings.isSpreadViewEnabled = true
+            appSettings.isRightToLeftReading = false
+            imageLoader.updateViewMode(appSettings: appSettings)
+        } label: {
+            Label(NSLocalizedString("Spread View (Left to Right)", comment: ""), systemImage: "book")
+        }
+
+        Divider()
+
+        Button {
+            imageLoader.toggleBookmark()
+        } label: {
+            Label(
+                imageLoader.isCurrentPageBookmarked()
+                    ? NSLocalizedString("Remove Bookmark", comment: "")
+                    : NSLocalizedString("Add Bookmark", comment: ""),
+                systemImage: imageLoader.isCurrentPageBookmarked() ? "bookmark.fill" : "bookmark"
+            )
+        }
+
+        Button {
+            imageLoader.goToNextBookmark()
+        } label: {
+            Label(NSLocalizedString("Next Bookmark", comment: ""), systemImage: "arrow.right.to.line")
+        }
+
+        Button {
+            imageLoader.goToPreviousBookmark()
+        } label: {
+            Label(NSLocalizedString("Previous Bookmark", comment: ""), systemImage: "arrow.left.to.line")
+        }
+
+        Button {
+            onOpenBookmarks()
+        } label: {
+            Label(NSLocalizedString("Show Bookmark List", comment: ""), systemImage: "list.bullet")
+        }
+
+        Divider()
+
+        Button {
+            imageLoader.rotateImage(by: 90)
+        } label: {
+            Label(NSLocalizedString("Rotate 90 Degrees", comment: ""), systemImage: "rotate.right")
+        }
+
+        Button {
+            imageLoader.rotateImage(by: -90)
+        } label: {
+            Label(NSLocalizedString("Rotate 90 Degrees Counterclockwise", comment: ""), systemImage: "rotate.left")
+        }
+
+        Divider()
+
+        Button {
+            appSettings.zoomFactor *= 1.25
+        } label: {
+            Label(NSLocalizedString("Zoom In", comment: ""), systemImage: "plus.magnifyingglass")
+        }
+
+        Button {
+            appSettings.zoomFactor *= 0.8
+        } label: {
+            Label(NSLocalizedString("Zoom Out", comment: ""), systemImage: "minus.magnifyingglass")
+        }
+
+        Button {
+            appSettings.zoomFactor = 1.0
+        } label: {
+            Label(NSLocalizedString("Reset Zoom", comment: ""), systemImage: "1.magnifyingglass")
+        }
     }
 
     // MARK: - Gestures
@@ -149,7 +382,7 @@ struct ViewerView: View {
 
     // MARK: - Overlay Controls
 
-    private var overlayControls: some View {
+    private func overlayControls(geometry: GeometryProxy) -> some View {
         VStack {
             topBar
             Spacer()
@@ -165,11 +398,33 @@ struct ViewerView: View {
 
             Spacer()
 
-            // Auto scroll
-            Button {
-                toggleAutoScroll()
-            } label: {
-                Image(systemName: isAutoScrolling ? "pause.fill" : "play.fill")
+            // Auto scroll with interval
+            HStack(spacing: 8) {
+                Button {
+                    toggleAutoScroll()
+                } label: {
+                    Image(systemName: isAutoScrolling ? "pause.fill" : "play.fill")
+                }
+
+                Button {
+                    showAutoScrollSettings.toggle()
+                } label: {
+                    Image(systemName: "timer")
+                        .font(.caption)
+                }
+                .popover(isPresented: $showAutoScrollSettings) {
+                    VStack(spacing: 12) {
+                        Text(NSLocalizedString("Auto Page Turn Settings", comment: ""))
+                            .font(.headline)
+                        Slider(value: $autoScrollInterval, in: 0.5...30.0, step: 0.5)
+                            .frame(width: 200)
+                        Text(String(format: NSLocalizedString("%.1f seconds", comment: ""), autoScrollInterval))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding()
+                    .presentationCompactAdaptation(.popover)
+                }
             }
 
             // Bookmark
@@ -217,7 +472,7 @@ struct ViewerView: View {
                 Image(systemName: "camera.filters")
             }
 
-            // More
+            // More menu
             Menu {
                 Button { onOpenBookmarks() } label: {
                     Label(NSLocalizedString("Bookmarks", comment: ""), systemImage: "bookmark.circle")
@@ -227,6 +482,14 @@ struct ViewerView: View {
                 } label: {
                     Label(NSLocalizedString("Rotate 90 Degrees", comment: ""), systemImage: "rotate.right")
                 }
+                Divider()
+                Button { isHelpPresented = true } label: {
+                    Label(NSLocalizedString("NectarView Help", comment: ""), systemImage: "questionmark.circle")
+                }
+                Button { isTipJarPresented = true } label: {
+                    Label(NSLocalizedString("Tip Jar…", comment: ""), systemImage: "heart.fill")
+                }
+                Divider()
                 Button { onOpenSettings() } label: {
                     Label(NSLocalizedString("Settings", comment: ""), systemImage: "gear")
                 }
@@ -243,19 +506,33 @@ struct ViewerView: View {
     private var bottomBar: some View {
         VStack(spacing: 8) {
             if !imageLoader.images.isEmpty {
+                // Slider with drag preview
                 Slider(
                     value: Binding(
                         get: { Double(imageLoader.currentIndex) },
-                        set: { imageLoader.updateSafeCurrentIndex(Int($0)) }
+                        set: { newValue in
+                            let index = Int(newValue)
+                            sliderPreviewIndex = index
+                            imageLoader.updateSafeCurrentIndex(index)
+                        }
                     ),
                     in: 0...max(Double(imageLoader.images.count - 1), 1),
                     step: 1
-                )
+                ) { editing in
+                    isSliderDragging = editing
+                    if editing {
+                        sliderPreviewIndex = imageLoader.currentIndex
+                    }
+                }
                 .padding(.horizontal)
 
-                Text("\(imageLoader.currentIndex + 1) / \(imageLoader.images.count)")
+                // Image info (navigation title equivalent)
+                Text(imageLoader.currentImageInfo)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .padding(.horizontal)
             }
         }
         .padding(.vertical, 10)
