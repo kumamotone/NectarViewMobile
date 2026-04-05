@@ -5,13 +5,15 @@ import UniformTypeIdentifiers
 struct DocumentPickerView: UIViewControllerRepresentable {
     let onPick: (URL) -> Void
 
+    private static let imageExtensions: Set<String> = ["png", "jpg", "jpeg", "gif", "bmp", "tiff", "webp"]
+
     private let supportedTypes: [UTType] = {
         var types: [UTType] = [
             .image,
             .pdf,
             .zip,
+            .folder,
         ]
-        // Archive types
         let archiveExtensions = ["rar", "7z", "tar", "gz", "bz2", "xz", "lha", "lzh", "cab", "cbz", "cbr"]
         for ext in archiveExtensions {
             if let type = UTType(filenameExtension: ext) {
@@ -46,16 +48,80 @@ struct DocumentPickerView: UIViewControllerRepresentable {
             guard let url = urls.first else { return }
             guard url.startAccessingSecurityScopedResource() else { return }
 
-            // Copy to app's temporary directory for persistent access.
-            // Must complete copy before releasing security scope.
-            let destURL = copyToTempDirectory(url)
-            url.stopAccessingSecurityScopedResource()
+            let ext = url.pathExtension.lowercased()
+            let isImage = DocumentPickerView.imageExtensions.contains(ext)
 
-            guard let destURL = destURL else {
-                print("Failed to copy file from document picker")
-                return
+            if isImage {
+                // Image file selected: copy all sibling images from the same folder
+                // so the user can navigate between them
+                let result = copySiblingImages(selectedURL: url)
+                url.stopAccessingSecurityScopedResource()
+
+                if let selectedFileURL = result {
+                    onPick(selectedFileURL)
+                }
+            } else {
+                // Archive, PDF, or folder: just copy the single file
+                let destURL = copyToTempDirectory(url)
+                url.stopAccessingSecurityScopedResource()
+
+                guard let destURL = destURL else {
+                    print("Failed to copy file from document picker")
+                    return
+                }
+                onPick(destURL)
             }
-            onPick(destURL)
+        }
+
+        /// Copies all image files from the selected image's parent folder
+        /// into a temp subdirectory, then returns the URL of the selected file
+        /// within that temp folder. ImageLoader.loadImagesFromFileOrFolder
+        /// will discover all sibling images automatically.
+        private func copySiblingImages(selectedURL: URL) -> URL? {
+            let parentFolder = selectedURL.deletingLastPathComponent()
+
+            // Try to access the parent folder
+            let hasParentAccess = parentFolder.startAccessingSecurityScopedResource()
+            defer {
+                if hasParentAccess {
+                    parentFolder.stopAccessingSecurityScopedResource()
+                }
+            }
+
+            // Create a unique temp subfolder to hold the images
+            let tempFolder = FileManager.default.temporaryDirectory
+                .appendingPathComponent("NectarViewImages", isDirectory: true)
+            try? FileManager.default.removeItem(at: tempFolder)
+            try? FileManager.default.createDirectory(at: tempFolder, withIntermediateDirectories: true)
+
+            // Try to enumerate sibling images
+            var copiedSelectedURL: URL?
+
+            if let contents = try? FileManager.default.contentsOfDirectory(
+                at: parentFolder,
+                includingPropertiesForKeys: nil
+            ) {
+                let imageFiles = contents.filter {
+                    DocumentPickerView.imageExtensions.contains($0.pathExtension.lowercased())
+                }
+
+                for imageURL in imageFiles {
+                    let dest = tempFolder.appendingPathComponent(imageURL.lastPathComponent)
+                    try? FileManager.default.copyItem(at: imageURL, to: dest)
+                    if imageURL.lastPathComponent == selectedURL.lastPathComponent {
+                        copiedSelectedURL = dest
+                    }
+                }
+            }
+
+            // If we couldn't read siblings (no permission), just copy the selected file
+            if copiedSelectedURL == nil {
+                let dest = tempFolder.appendingPathComponent(selectedURL.lastPathComponent)
+                try? FileManager.default.copyItem(at: selectedURL, to: dest)
+                copiedSelectedURL = dest
+            }
+
+            return copiedSelectedURL
         }
 
         private func copyToTempDirectory(_ url: URL) -> URL? {
