@@ -115,37 +115,19 @@ struct ViewerView: View {
 
     private func imageContentWithTapZones(geometry: GeometryProxy) -> some View {
         ZStack {
+            // Image layer (gestures: pinch zoom, drag/swipe)
             ImageDisplayView(imageLoader: imageLoader, appSettings: appSettings)
                 .scaleEffect(scale)
                 .offset(offset)
                 .rotationEffect(appSettings.isSpreadViewEnabled ? .zero : imageLoader.currentRotation)
                 .gesture(magnificationGesture)
                 .simultaneousGesture(dragGesture)
-                .onTapGesture(count: 2) {
-                    withAnimation(.spring()) {
-                        if scale > 1.1 {
-                            scale = 1.0
-                            offset = .zero
-                            lastScale = 1.0
-                            lastOffset = .zero
-                        } else {
-                            scale = 2.5
-                            lastScale = 2.5
-                        }
-                    }
-                }
-                .onTapGesture(count: 1) {
-                    withAnimation {
-                        isToolbarVisible.toggle()
-                    }
-                }
 
-            // Left/right tap zones for page navigation
+            // Tap layer: left zone / center zone / right zone
             if scale <= 1.1 {
                 HStack(spacing: 0) {
-                    // Left tap zone
-                    Rectangle()
-                        .fill(Color.clear)
+                    // Left tap zone - page navigation
+                    Color.clear
                         .frame(width: geometry.size.width * 0.2)
                         .contentShape(Rectangle())
                         .onTapGesture {
@@ -161,11 +143,31 @@ struct ViewerView: View {
                                 .foregroundStyle(.white.opacity(0.3))
                         )
 
-                    Spacer()
+                    // Center tap zone - toolbar toggle / double-tap zoom
+                    Color.clear
+                        .frame(maxWidth: .infinity)
+                        .contentShape(Rectangle())
+                        .onTapGesture(count: 2) {
+                            withAnimation(.spring()) {
+                                if scale > 1.1 {
+                                    scale = 1.0
+                                    offset = .zero
+                                    lastScale = 1.0
+                                    lastOffset = .zero
+                                } else {
+                                    scale = 2.5
+                                    lastScale = 2.5
+                                }
+                            }
+                        }
+                        .onTapGesture(count: 1) {
+                            withAnimation {
+                                isToolbarVisible.toggle()
+                            }
+                        }
 
-                    // Right tap zone
-                    Rectangle()
-                        .fill(Color.clear)
+                    // Right tap zone - page navigation
+                    Color.clear
                         .frame(width: geometry.size.width * 0.2)
                         .contentShape(Rectangle())
                         .onTapGesture {
@@ -181,7 +183,6 @@ struct ViewerView: View {
                                 .foregroundStyle(.white.opacity(0.3))
                         )
                 }
-                .allowsHitTesting(!isToolbarVisible)
             }
         }
     }
